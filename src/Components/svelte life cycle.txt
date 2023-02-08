@@ -1,0 +1,8 @@
+svelte life cycle 
+parent to child data sharing 
+    props
+    events
+    store/state Management
+
+svelte special elements
+async await in svelte
