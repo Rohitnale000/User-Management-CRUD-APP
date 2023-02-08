@@ -1,0 +1,24 @@
+[
+  {
+    "id": "318fa5cc-0c2e-47b3-bb4c-c7ca09383738",
+    "firstName": "Rohit",
+    "middleName": "Sunil",
+    "lastName": "Nale",
+    "gender": "Male",
+    "dateOfBirth": "2023-02-02",
+    "email": "rohit001@indx.ai",
+    "password": "$2b$10$vdHOkMOxzxZ9rj1KMw4yT.Un129HjtVVe4HoxVEm0r7CbbRz.5fdG",
+    "address": "Baramati"
+  },
+  {
+    "id": "b638a4e5-2e33-4c50-b959-c6db927c7229",
+    "firstName": "Amol",
+    "middleName": "m",
+    "lastName": "Pawar",
+    "gender": "Male",
+    "dateOfBirth": "2023-02-27",
+    "email": "amol001@indx.ai",
+    "password": "$2b$10$fisKGYGdJBykWpyJORefZOGcnW0P6kTXFMckAv3U8JIf5WV5LkJF2",
+    "address": "satara"
+  }
+]
