@@ -130,5 +130,4 @@ exports.deleteSingleUserService = (userid) => {
     userDataWrite(filterData)
     return{success:true,body:"User remove successfully"}
   }
- 
 };

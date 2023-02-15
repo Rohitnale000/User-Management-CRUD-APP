@@ -2,7 +2,6 @@ const express = require("express");
 const {deleteAll,displayUser,displaySingleUser,addUser,updateUser,deleteUser} = require("../Controller/usersController.js");
 const router = express.Router();
 
-
 //save student data into json file
 router.post("/user",addUser);
   

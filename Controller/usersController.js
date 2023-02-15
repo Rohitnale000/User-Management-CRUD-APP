@@ -37,7 +37,6 @@ const addUser = (req, res) => {
     res.status(400).send(serviceResponse);
   }
 };
-
 // //delete specific record
 const deleteUser = (req, res) => {
   var serviceResponse = deleteSingleUserService(req.params.id);
