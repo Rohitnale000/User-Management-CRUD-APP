@@ -1,171 +1,314 @@
 <script>
+  import UserManagement from "./../userManagement.svelte";
   import Form from "./form.svelte";
   import TableComponent from "./tableComponent.svelte";
+  import toast, { Toaster } from "svelte-french-toast";
+  import { createEventDispatcher, onMount } from "svelte";
+  $: page =1;
+  let totalRecords="";
+  let availableRecordPerPage=""
+  let displayStatus = "default";
+  let pageBlockToShow=""
 
-  let displayStatus="default";
-  
   let userData = [];
 
-  const getData = async() => {
-      const res = await fetch(`http://localhost:3000/api/user`,
-      {
-        method:"GET",
-        headers:{'content-type':'application/json'}
-      })
-  
-      const data = await res.json(); 
-      userData = data;
-  }
 
-  const addUser = () => {
-    displayStatus="addClicked"
+  $: pageNumber = (e) => {
+    if (e.detail.message === "next" && page < totalRecords) {
+      page++;
+      getData();
+    } else if (e.detail.message === "prev" && page > 1 && page <= totalRecords) {
+      page--;
+      getData();
+      console.log("prev pressed");
+    } else if (e.detail > 0 && e.detail <= totalRecords) {
+      page = e.detail;
+      getData();
+    }
   };
 
+  const getData = async () => {
+    const res = await fetch(`http://localhost:3000/api/user/page/limit?page=${page}&limit=8`, {
+      method: "GET",
+      headers: { "content-type": "application/json" },
+    });
 
-//post Data
- 
-  const doPost= async (e)=> {
-    displayStatus="formSubmit"
+    const dataFromAPI = await res.json();
+    userData = dataFromAPI.data;
+    totalRecords=dataFromAPI.totalRecords;
+    availableRecordPerPage=userData.length;
+    pageBlockToShow=Math.ceil(totalRecords/8)
+  };
+
+  const addUser = () => {
+    displayStatus = "addClicked";
+  };
+
+  const navigateToHome = ()=>{
+    displayStatus = "homeClicked";
+  }
+  //post Data
+
+  const doPost = async (e) => {
+    console.log(e.detail);
     let userDetailObj = e.detail;
-    userData = userData.concat(userDetailObj)
-    
-    const res = await fetch('http://localhost:3000/api/user',{
-      method:  'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-      firstName:userDetailObj.firstName,
-      middleName:userDetailObj.middleName,
-      lastName: userDetailObj.lastName,
-      gender: userDetailObj.gender,
-      dateOfBirth:userDetailObj.dateOfBirth,
-      email:userDetailObj. email,
-      password: userDetailObj.password,
-      address: userDetailObj.address,
-      })
-    })
-      return (await res).text()
-  }
- 
-  let editUserData;
-  const displayForm = (e)=>{
-    displayStatus="updateDataForm"
- editUserData=e.detail
-  }
 
+    if (
+      e.detail.firstName.trim() === "" ||
+      e.detail.lastName.trim() === "" ||
+      e.detail.email.trim() === "" ||
+      e.detail.password.trim() === "" ||
+      e.detail.dateOfBirth.trim() === "" ||
+      e.detail.address.trim() === ""
+    ) {
+      // toast.error("Please fill input with valid details", {
+      //   position: "bottom-center",
+      // });
+      return;
+    } else {
+      if (
+        !e.detail.email.match(
+          /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
+        )
+      ) {
+        // toast.error("Please enter valid email address", {
+        //   position: "bottom-center",
+        //   style: "border: 1px solid #713200; padding: 20px;",
+        // });
+        return;
+      } else if(e.detail.password !== e.detail.confirmPassword){
+        return
+      }
+      else {
+        displayStatus = "formSubmit";
+        toast.success(
+          userDetailObj.firstName + " " + "you have Successfully register!"
+        );
+        userData = userData.concat(userDetailObj);
 
-  const handleUserUpdateDetail = (e) =>{
-    displayStatus="updateDataShow"
-    console.log(e.detail);
-    let id =editUserData.id;
-    console.log(id);
-    let index = userData.findIndex(res => res.id === id);
-    if(index>-1){
-
-      // let userTOUpdate ={
-      // firstName:editUserData.firstName,
-      // middleName:editUserData.middleName,
-      // lastName: editUserData.lastName,
-      // gender: editUserData.gender,
-      // dateOfBirth:editUserData.dateOfBirth,
-      // email:editUserData. email,
-      // password: editUserData.password,
-      // address: editUserData.address,
-      // }
-
-
-
-
-      fetch(`http://localhost:3000/api/user/`+ editUserData.id,{
-      method:  'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-      firstName:editUserData.firstName,
-      middleName:editUserData.middleName,
-      lastName: editUserData.lastName,
-      gender: editUserData.gender,
-      dateOfBirth:editUserData.dateOfBirth,
-      email:editUserData. email,
-      password: editUserData.password,
-      address: editUserData.address,
-      })
-    })
-      .then(response => response.json())
-      .then(result => console.log(result))
-
-
+        const res = await fetch("http://localhost:3000/api/user", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            firstName: userDetailObj.firstName,
+            middleName: userDetailObj.middleName,
+            lastName: userDetailObj.lastName,
+            gender: userDetailObj.gender,
+            dateOfBirth: userDetailObj.dateOfBirth,
+            email: userDetailObj.email,
+            password: userDetailObj.password,
+            address: userDetailObj.address,
+            street: userDetailObj.street,
+            landmark: userDetailObj.landmark,
+            state: userDetailObj.state,
+            city: userDetailObj.city,
+            pinCode: userDetailObj.pinCode
+          }),
+        });
+        // return (await res).text();
+      }
     }
-  }
+  };
 
-
-  const handleUserDelete = (e)=>{
-    displayStatus="formSubmit"
-    console.log(e.detail);
+  let editUserData;
+  const displayForm = (e) => {
+    displayStatus = "updateDataForm";
+    editUserData = e.detail;
     
-    let index = userData.findIndex(res => res.id === e.detail);
-    let user= userData[index];
-    userData.splice(index,1)
-    userData = userData
-    fetch(`http://localhost:3000/api/user/`+e.detail,{
-      method:  'DELETE'
+  };
+
+  const handleUserUpdateDetail = (e) => {
+    if (
+      e.detail.firstName.trim() === "" ||
+      e.detail.lastName.trim() === "" ||
+      e.detail.email.trim() === "" ||
+      e.detail.password.trim() === "" ||
+      e.detail.dateOfBirth.trim() === "" ||
+      e.detail.address.trim() === ""
+    ) {
+      toast.error("Please fill input with valid details", {
+        position: "bottom-center",
+      });
+      return;
+    } else {
+      if (
+        !e.detail.email.match(
+          /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
+        )
+      ) {
+        toast.error("Please enter valid email address", {
+          position: "bottom-center",
+          style: "border: 1px solid #713200; padding: 20px;",
+        });
+        return;
+      }else if(e.detail.password!==e.detail.confirmPassword){
+        return
+      } else if(!e.detail.password.match(/^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,}$/)){
+        return
+      }
+      else {
+        displayStatus = "updateDataShow";
+
+        toast.success("Data updated successfully...", {
+          style: "border: 1px solid #713200; padding: 16px; color: #713200;",
+          iconTheme: {
+            primary: "#713200",
+            secondary: "#FFFAEE",
+          },
+        });
+
+        let id = editUserData.id;
+        console.log(id);
+        let index = userData.findIndex((res) => res.id === id);
+        if (index > -1) {
+          fetch(`http://localhost:3000/api/user/` + editUserData.id, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              firstName: e.detail.firstName,
+              middleName:  e.detail.middleName,
+              lastName:  e.detail.lastName,
+              gender:  e.detail.gender,
+              dateOfBirth:  e.detail.dateOfBirth,
+              email:  e.detail.email,
+              password:  e.detail.password,
+              address:  e.detail.address,
+              street: e.detail.street,
+            landmark: e.detail.landmark,
+            state: e.detail.state,
+            city: e.detail.city,
+            pinCode: e.detail.pinCode
+            }),
+          })
+            .then((response) => response.json())
+            .then((result) => console.log(result));
+        }
+      }
+    }
+  };
+
+  const handleUserDelete = (e) => {
+    displayStatus = "formSubmit";
+    toast.error("User deleted successfully...");
+    console.log(e.detail);
+
+    let index = userData.findIndex((res) => res.id === e.detail);
+    let user = userData[index];
+    userData.splice(index, 1);
+    userData = userData;
+    fetch(`http://localhost:3000/api/user/` + e.detail, {
+      method: "DELETE",
     })
-      .then(response => response.text())
-      .then(result => console.log(result))
-  }
-
-
-
-
+      .then((response) => response.text())
+      .then((result) => console.log(result));
+  };
 </script>
-<div class="container-fluid">
-  <nav class="navbar navbar-expand-lg navbar-light bg-primary">
+
+<Toaster />
+
+<!-- <div class="container-fluid">
+  <nav class="navbar navbar-light bg-primary">
     <span class="navbar-brand1">
-      <img
-        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAABtklEQVR4nO2ZPShFYRjHf5dEsriSrAwWGViUkiQMRh8Li7JZZVDko5QySBYGCzIZZRZyDcrHjUSxiluyuK7u0VvnLqeLc895OM/N+dV/fHuf3zmn932f80JISEhQ1ABDwBywAiwBE0ALECEP6ASOAeubHABRFDMPpH+QyOQBWAUaUMaoSwFn3oFhlFAOvHgUMUkB9Shg0IdEJmsoYFNA5BoFxAREPoDioEVuBERMyoIWuRUSKQ1a5EhAwqx6gbMjIHKKAqYFRJZRQI+ASC8KaBQQaUIBewIiuyjgUkDkAgVsCYhsoICOHPqQbDFj21FCtw+RLpRx50HCHG/UsehBxIxRRy2QzLEzrEMps/n+NjJEXO4r90Ahyom5EImTB5y4ELkiD4i7/EGnmiLg0YXIK1CCYqZyWLUWUEgUWPdw5jL/xCpRQBUw6fJz+ipPwAxQHYRAq/0033wIOJMEtoG2375DKbB76zPB4r/KOdBvzylK8x8JWFmEzNwijNgHPCugpOwafDHgs/uTShro83OB86xAwrKTACq8iIwrKN5yZMyLyKGCwi1H9r2IJBQUbmXZPENCQv4rn6Ej5y2yxDtPAAAAAElFTkSuQmCC"
-        width="50"
-        height="50"
-        class="d-inline-block align-top"
-        alt=""
-      />
-      User Management
+      <span style="color: white; font-size: 30px;">User <b>Management</b></span>
     </span>
     <div class="container">
       <span class="navbar-brand" on:click={addUser}>Add User</span>
     </div>
   </nav>
-</div>
-{#if displayStatus==="addClicked"||displayStatus==="updateDataForm"}
-<!-- <Form  on:userObject={doPost}/>
+</div> -->
+
+
+  
+      <div class="table-title">
+        <div class="row">
+          <div class="col-sm-5">
+            <h2>User <b>Management</b></h2>
+          </div>
+          <div class="col-sm-7">
+            <a href="#" class="btn btn-secondary"
+              ><i class="material-icons">&#xE147;</i>
+              <span on:click={addUser}>Add New User</span></a
+            >
+            <a href="#" class="btn btn-secondary"
+              ><i class="material-icons">&#xE24D;</i>
+              <span on:click={navigateToHome}>Home</span></a
+            >
+          </div>
+        </div>
+      </div>
+
+
+
+{#if displayStatus === "addClicked" || displayStatus === "updateDataForm"}
+  <!-- <Form  on:userObject={doPost}/>
 {:else if displayStatus==="updateDataForm"}/> -->
-<Form on:onUpdate={handleUserUpdateDetail} on:userObject={doPost} {editUserData}{displayStatus}{userData} />
-{:else if displayStatus==="formSubmit"|| displayStatus==="default" ||displayStatus==="updateDataShow"}
-<TableComponent {userData}  on:userDelete={handleUserDelete} on:userUpdate={displayForm} {getData}/>
+  <Form
+    on:onUpdate={handleUserUpdateDetail}
+    on:userObject={doPost}
+    {editUserData}
+    {displayStatus}
+    {userData}
+    
+  />
+{:else if displayStatus === "formSubmit" || displayStatus === "default" || displayStatus === "updateDataShow" ||  displayStatus === "homeClicked"}
+  <TableComponent
+    on:userDelete={handleUserDelete}
+    on:userUpdate={displayForm}
+    {getData}
+    {availableRecordPerPage}
+    {userData}
+    {totalRecords}
+    {pageBlockToShow}
+    on:page={pageNumber}
+    on:prev={pageNumber}
+    on:next={pageNumber}
+  />
 {/if}
 
 <style>
-  .container-fluid {
-    margin: 0px;
-    padding: 0px;
-  }
 
-  .navbar-brand1 {
-    margin-top: 20px;
-    font-size: 26px;
-    font-weight: bold;
-    color: white;
-  }
 
-  .navbar-brand {
-    cursor: pointer;
-    text-align: right;
-    text-align: center;
-    margin-left: 90%;
-    color: white;
-    font-size: 24px;
-    border-radius: 10px;
-  }
+    .table-title {
+      background: #299BE4;
+      color: #fff;
+      padding: 16px 30px;
+      margin: 0px 0px 0px;
+      border-radius: 3px 3px 0 0;
+    }
+    .table-title h2 {
+      margin: 2px 0 0;
+      font-size: 24px;
+    }
+    .table-title .btn {
+      color: #566787;
+      float: right;
+      font-size: 13px;
+      background: #fff;
+      border: none;
+      min-width: 50px;
+      border-radius: 2px;
+      border: none;
+      outline: none !important;
+      margin-left: 10px;
+    }
+    .table-title .btn:hover,
+    .table-title .btn:focus {
+      color: #566787;
+      background: #F2F2F2;
+    }
+    .table-title .btn i {
+      float: left;
+      font-size: 21px;
+      margin-right: 5px;
+    }
+    .table-title .btn span {
+      float: left;
+      margin-top: 2px;
+    }
+  
 </style>
